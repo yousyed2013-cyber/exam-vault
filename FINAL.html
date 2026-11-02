@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NERD_OS // EXAM_VAULT (RENDER_EDITION)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { mono: ['"JetBrains Mono"', 'monospace'] },
+                    colors: {
+                        cyber: { bg: '#0a0d14', panel: '#121824', border: '#1e293b', neon: '#00ff66', cyan: '#00f0ff', dim: '#64748b' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'JetBrains Mono', monospace; background-color: #0a0d14; color: #e2e8f0; }
+        .glow-neon { text-shadow: 0 0 10px rgba(0, 255, 102, 0.5); }
+        .glow-box { box-shadow: 0 0 15px rgba(0, 255, 102, 0.1); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0d14; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Top Navigation -->
+    <header class="border-b border-cyber-border bg-cyber-panel/80 sticky top-0 z-40 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <div class="w-3 h-3 bg-cyber-neon rounded-full animate-pulse"></div>
+                <span class="font-bold text-lg text-cyber-neon glow-neon">NERD_OS</span>
+                <span class="text-xs px-2 py-0.5 rounded bg-cyber-border text-cyber-cyan">// RENDER_VAULT</span>
+            </div>
+            
+            <div class="w-full md:w-96 relative">
+                <input type="text" id="searchInput" placeholder="Search papers, worksheets..." 
+                    class="w-full bg-cyber-bg border border-cyber-border rounded px-3 py-1.5 pl-8 text-xs text-cyber-cyan placeholder-cyber-dim focus:outline-none focus:border-cyber-neon">
+                <i class="fa-solid fa-search absolute left-2.5 top-2.5 text-xs text-cyber-dim"></i>
+            </div>
+
+            <button onclick="openUploadModal()" class="px-4 py-2 bg-cyber-neon text-cyber-bg font-bold text-xs rounded transition flex items-center gap-1.5 glow-box">
+                <i class="fa-solid fa-plus"></i> Share Resource
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full grid grid-cols-1 md:grid-cols-4 gap-6">
+        <aside class="space-y-4">
+            <div class="bg-cyber-panel border border-cyber-border rounded-lg p-4">
+                <h3 class="text-xs font-bold text-cyber-cyan mb-3 uppercase tracking-wider">Document Type</h3>
+                <div class="space-y-1" id="typeFilters">
+                    <button onclick="filterType('all')" class="w-full text-left px-3 py-1.5 rounded text-xs bg-cyber-neon/10 text-cyber-neon border border-cyber-neon/30">⚡ All Nodes</button>
+                    <button onclick="filterType('Exam Paper')" class="w-full text-left px-3 py-1.5 rounded text-xs text-cyber-dim hover:text-cyber-cyan">📝 Exam Papers</button>
+                    <button onclick="filterType('Worksheet')" class="w-full text-left px-3 py-1.5 rounded text-xs text-cyber-dim hover:text-cyber-cyan">📋 Worksheets</button>
+                    <button onclick="filterType('Revision Notes')" class="w-full text-left px-3 py-1.5 rounded text-xs text-cyber-dim hover:text-cyber-cyan">📖 Revision Notes</button>
+                </div>
+            </div>
+        </aside>
+
+        <section class="md:col-span-3 space-y-4">
+            <div id="resourcesGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+            <div id="emptyState" class="hidden text-center py-16 text-cyber-dim">No resource nodes found in sector.</div>
+        </section>
+    </main>
+
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-cyber-panel border border-cyber-border rounded-lg w-full max-w-md p-6 space-y-3">
+            <h3 class="text-sm font-bold text-cyber-neon">Deploy Resource Node</h3>
+            <form id="uploadForm" onsubmit="addResource(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-cyber-dim mb-1">Title</label>
+                    <input type="text" id="title" required class="w-full bg-cyber-bg border border-cyber-border rounded p-2 text-cyber-cyan">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-cyber-dim mb-1">Type</label>
+                        <select id="type" class="w-full bg-cyber-bg border border-cyber-border rounded p-2 text-cyber-cyan">
+                            <option value="Exam Paper">Exam Paper</option>
+                            <option value="Worksheet">Worksheet</option>
+                            <option value="Revision Notes">Revision Notes</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-cyber-dim mb-1">Subject</label>
+                        <select id="subject" class="w-full bg-cyber-bg border border-cyber-border rounded p-2 text-cyber-cyan">
+                            <option value="Mathematics">Mathematics</option>
+                            <option value="Science">Science</option>
+                            <option value="English">English</option>
+                            <option value="Hindi">Hindi</option>
+                            <option value="Arabic">Arabic</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="border border-cyber-border rounded p-2 bg-cyber-bg space-y-2">
+                    <div class="flex justify-between items-center text-[11px]">
+                        <span class="text-cyber-cyan font-bold">SOURCE TYPE:</span>
+                        <div class="space-x-3">
+                            <label class="cursor-pointer text-cyber-neon"><input type="radio" name="sourceType" value="link" checked onclick="toggleSource('link')"> External URL</label>
+                            <label class="cursor-pointer text-cyber-cyan"><input type="radio" name="sourceType" value="file" onclick="toggleSource('file')"> Local File Upload</label>
+                        </div>
+                    </div>
+                    <div id="linkGroup">
+                        <input type="url" id="link" placeholder="https://drive.google.com/..." class="w-full bg-cyber-panel border border-cyber-border rounded p-2 text-cyber-cyan">
+                    </div>
+                    <div id="fileGroup" class="hidden">
+                        <input type="file" id="fileInput" class="w-full text-[11px] text-cyber-cyan file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-cyber-neon file:text-cyber-bg font-bold cursor-pointer">
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeUploadModal()" class="px-3 py-1.5 bg-cyber-border text-cyber-dim rounded">Cancel</button>
+                    <button type="submit" id="submitBtn" class="px-3 py-1.5 bg-cyber-neon text-cyber-bg font-bold rounded">Deploy Node</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script Engine -->
+    <script>
+        let resources = JSON.parse(localStorage.getItem('nerdos_render_vault_v1')) || [
+            { id: '1', title: 'Grade 7 Mathematics Half-Yearly Practice', type: 'Exam Paper', subject: 'Mathematics', link: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', isFile: false, fileName: '', upvotes: 12 }
+        ];
+        let currentFilter = 'all';
+
+        function save() {
+            localStorage.setItem('nerdos_render_vault_v1', JSON.stringify(resources));
+            render();
+        }
+
+        function toggleSource(mode) {
+            if(mode === 'link') {
+                document.getElementById('linkGroup').classList.remove('hidden');
+                document.getElementById('fileGroup').classList.add('hidden');
+                document.getElementById('link').required = true;
+            } else {
+                document.getElementById('linkGroup').classList.add('hidden');
+                document.getElementById('fileGroup').classList.remove('hidden');
+                document.getElementById('link').required = false;
+            }
+        }
+
+        function render() {
+            const grid = document.getElementById('resourcesGrid');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            
+            const filtered = resources.filter(r => {
+                const matchType = currentFilter === 'all' || r.type === currentFilter;
+                const matchSearch = r.title.toLowerCase().includes(search) || r.subject.toLowerCase().includes(search);
+                return matchType && matchSearch;
+            });
+
+            if(filtered.length === 0) {
+                grid.innerHTML = '';
+                document.getElementById('emptyState').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('emptyState').classList.add('hidden');
+
+            grid.innerHTML = filtered.map(r => {
+                const badge = r.isFile 
+                    ? '<span class="text-[9px] px-1.5 py-0.5 rounded bg-cyber-cyan/20 text-cyber-cyan">LOCAL UPLOAD</span>' 
+                    : '<span class="text-[9px] px-1.5 py-0.5 rounded bg-cyber-neon/20 text-cyber-neon">CLOUD LINK</span>';
+                
+                const actionBtn = r.isFile 
+                    ? `<a href="${r.link}" download="${r.fileName || 'exam_document.pdf'}" class="text-cyber-cyan hover:underline font-bold">Download File</a>`
+                    : `<a href="${r.link}" target="_blank" class="text-cyber-cyan hover:underline font-bold">Access Link</a>`;
+
+                return `
+                    <div class="bg-cyber-panel border border-cyber-border rounded-lg p-4 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-[10px] px-2 py-0.5 rounded bg-cyber-neon/10 text-cyber-neon border border-cyber-neon/30">${r.type}</span>
+                                ${badge}
+                            </div>
+                            <h4 class="text-sm font-bold text-cyber-cyan">${r.title}</h4>
+                            <p class="text-xs text-cyber-dim mt-1">Subject: <span class="text-cyber-slate">${r.subject}</span></p>
+                        </div>
+                        <div class="flex items-center justify-between mt-4 pt-3 border-t border-cyber-border text-xs">
+                            <button onclick="upvote('${r.id}')" class="text-cyber-neon hover:scale-110 transition">▲ ${r.upvotes}</button>
+                            <div class="space-x-3">
+                                ${actionBtn}
+                                <button onclick="del('${r.id}')" class="text-red-400 hover:underline">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterType(type) { 
+            currentFilter = type; 
+            // Update active states on sidebar buttons
+            const buttons = document.querySelectorAll('#typeFilters button');
+            buttons.forEach(btn => {
+                if(btn.textContent.includes(type) || (type === 'all' && btn.textContent.includes('All'))) {
+                    btn.className = "w-full text-left px-3 py-1.5 rounded text-xs bg-cyber-neon/10 text-cyber-neon border border-cyber-neon/30";
+                } else {
+                    btn.className = "w-full text-left px-3 py-1.5 rounded text-xs text-cyber-dim hover:text-cyber-cyan";
+                }
+            });
+            render(); 
+        }
+
+        function openUploadModal() { document.getElementById('uploadModal').classList.remove('hidden'); }
+        function closeUploadModal() { document.getElementById('uploadModal').classList.add('hidden'); toggleSource('link'); }
+        
+        function addResource(e) {
+            e.preventDefault();
+            const sourceType = document.querySelector('input[name="sourceType"]:checked').value;
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.textContent = 'Deploying...';
+            submitBtn.disabled = true;
+
+            const finalize = (linkUrl, isFile = false, fileName = '') => {
+                const newRes = {
+                    id: Date.now().toString(),
+                    title: document.getElementById('title').value,
+                    type: document.getElementById('type').value,
+                    subject: document.getElementById('subject').value,
+                    link: linkUrl,
+                    isFile: isFile,
+                    fileName: fileName,
+                    upvotes: 1
+                };
+                resources.unshift(newRes);
+                save();
+                closeUploadModal();
+                document.getElementById('uploadForm').reset();
+                submitBtn.textContent = 'Deploy Node';
+                submitBtn.disabled = false;
+            };
+
+            if(sourceType === 'file') {
+                const fileInput = document.getElementById('fileInput');
+                if(fileInput.files && fileInput.files[0]) {
+                    const file = fileInput.files[0];
+                    const reader = new FileReader();
+                    reader.onload = function(evt) {
+                        finalize(evt.target.result, true, file.name);
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    alert('Please select a valid file.');
+                    submitBtn.textContent = 'Deploy Node';
+                    submitBtn.disabled = false;
+                }
+            } else {
+                finalize(document.getElementById('link').value, false, '');
+            }
+        }
+
+        function upvote(id) {
+            const r = resources.find(x => x.id === id);
+            if(r) { r.upvotes++; save(); }
+        }
+
+        function del(id) {
+            if(confirm('Purge this resource node from vault?')) {
+                resources = resources.filter(x => x.id !== id);
+                save();
+            }
+        }
+
+        document.getElementById('searchInput').addEventListener('input', render);
+        render();
+    </script>
+</body>
+</html>
