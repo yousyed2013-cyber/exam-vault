@@ -46,9 +46,14 @@
                 <i class="fa-solid fa-search absolute left-2.5 top-2.5 text-xs text-cyber-dim"></i>
             </div>
 
-            <button onclick="openUploadModal()" class="px-4 py-2 bg-cyber-neon text-cyber-bg font-bold text-xs rounded transition flex items-center gap-1.5 glow-box">
-                <i class="fa-solid fa-plus"></i> Share Resource
-            </button>
+            <div class="flex items-center gap-2">
+                <button onclick="openUploadModal()" class="px-3 py-2 bg-cyber-neon text-cyber-bg font-bold text-xs rounded transition flex items-center gap-1.5 glow-box">
+                    <i class="fa-solid fa-plus"></i> Share Resource
+                </button>
+                <div id="authNavArea">
+                    <!-- Populated dynamically based on session state -->
+                </div>
+            </div>
         </div>
     </header>
 
@@ -126,16 +131,147 @@
         </div>
     </div>
 
+    <!-- Auth Modal (Login / Signup) -->
+    <div id="authModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-cyber-panel border border-cyber-border rounded-lg w-full max-w-sm p-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-cyber-border pb-2">
+                <h3 id="authModalTitle" class="text-sm font-bold text-cyber-neon">System Access // Login</h3>
+                <button onclick="closeAuthModal()" class="text-cyber-dim hover:text-cyber-cyan"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-3 text-xs">
+                <div id="nameFieldGroup" class="hidden">
+                    <label class="block text-cyber-dim mb-1">Codename / Username</label>
+                    <input type="text" id="authName" class="w-full bg-cyber-bg border border-cyber-border rounded p-2 text-cyber-cyan placeholder-cyber-dim" placeholder="e.g. cyber_geek99">
+                </div>
+                <div>
+                    <label class="block text-cyber-dim mb-1">Email Node</label>
+                    <input type="email" id="authEmail" required class="w-full bg-cyber-bg border border-cyber-border rounded p-2 text-cyber-cyan placeholder-cyber-dim" placeholder="user@nerdos.net">
+                </div>
+                <div>
+                    <label class="block text-cyber-dim mb-1">Passkey</label>
+                    <input type="password" id="authPassword" required class="w-full bg-cyber-bg border border-cyber-border rounded p-2 text-cyber-cyan placeholder-cyber-dim" placeholder="••••••••">
+                </div>
+
+                <div class="pt-2 flex flex-col gap-2">
+                    <button type="submit" id="authSubmitBtn" class="w-full py-2 bg-cyber-neon text-cyber-bg font-bold rounded">Authenticate</button>
+                    <button type="button" onclick="toggleAuthMode()" id="authSwitchText" class="text-[11px] text-cyber-dim hover:text-cyber-cyan text-center">New user? Initialize account signup</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Script Engine -->
     <script>
         let resources = JSON.parse(localStorage.getItem('nerdos_render_vault_v1')) || [
             { id: '1', title: 'Grade 7 Mathematics Half-Yearly Practice', type: 'Exam Paper', subject: 'Mathematics', link: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', isFile: false, fileName: '', upvotes: 12 }
         ];
+        let users = JSON.parse(localStorage.getItem('nerdos_users_v1')) || [];
+        let currentUser = JSON.parse(localStorage.getItem('nerdos_current_user_v1')) || null;
         let currentFilter = 'all';
+        let isSignupMode = false;
 
         function save() {
             localStorage.setItem('nerdos_render_vault_v1', JSON.stringify(resources));
             render();
+        }
+
+        function saveAuth() {
+            localStorage.setItem('nerdos_users_v1', JSON.stringify(users));
+            localStorage.setItem('nerdos_current_user_v1', JSON.stringify(currentUser));
+            renderAuthNav();
+        }
+
+        // Render Top-Right Auth Navigation UI
+        function renderAuthNav() {
+            const container = document.getElementById('authNavArea');
+            if(currentUser) {
+                container.innerHTML = `
+                    <div class="flex items-center gap-2 text-xs bg-cyber-bg border border-cyber-border px-3 py-1.5 rounded">
+                        <span class="text-cyber-neon font-bold"><i class="fa-solid fa-user-astronaut"></i> ${currentUser.name}</span>
+                        <button onclick="logout()" class="text-cyber-dim hover:text-red-400 ml-2" title="Disconnect Session"><i class="fa-solid fa-power-off"></i></button>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="openAuthModal('login')" class="px-3 py-2 bg-cyber-bg border border-cyber-border text-cyber-cyan font-bold text-xs rounded hover:border-cyber-cyan transition">Login</button>
+                        <button onclick="openAuthModal('signup')" class="px-3 py-2 bg-cyber-cyan/10 border border-cyber-cyan/30 text-cyber-cyan font-bold text-xs rounded hover:bg-cyber-cyan/20 transition">Sign Up</button>
+                    </div>
+                `;
+            }
+        }
+
+        function openAuthModal(mode) {
+            isSignupMode = (mode === 'signup');
+            updateAuthModalUI();
+            document.getElementById('authModal').classList.remove('hidden');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.add('hidden');
+            document.getElementById('authForm').reset();
+        }
+
+        function toggleAuthMode() {
+            isSignupMode = !isSignupMode;
+            updateAuthModalUI();
+        }
+
+        function updateAuthModalUI() {
+            const title = document.getElementById('authModalTitle');
+            const nameGroup = document.getElementById('nameFieldGroup');
+            const submitBtn = document.getElementById('authSubmitBtn');
+            const switchText = document.getElementById('authSwitchText');
+
+            if(isSignupMode) {
+                title.textContent = 'System Access // Account Creation';
+                nameGroup.classList.remove('hidden');
+                document.getElementById('authName').required = true;
+                submitBtn.textContent = 'Register Node';
+                switchText.textContent = 'Existing operative? Log in instead';
+            } else {
+                title.textContent = 'System Access // Login';
+                nameGroup.classList.add('hidden');
+                document.getElementById('authName').required = false;
+                submitBtn.textContent = 'Authenticate';
+                switchText.textContent = 'New user? Initialize account signup';
+            }
+        }
+
+        function handleAuthSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+
+            if(isSignupMode) {
+                const name = document.getElementById('authName').value.trim();
+                const existing = users.find(u => u.email === email);
+                if(existing) {
+                    alert('Error: Email node already registered in network database.');
+                    return;
+                }
+                const newUser = { id: Date.now().toString(), name, email, password };
+                users.push(newUser);
+                currentUser = { id: newUser.id, name: newUser.name, email: newUser.email };
+                saveAuth();
+                closeAuthModal();
+                alert('Account node successfully deployed & session initialized!');
+            } else {
+                const found = users.find(u => u.email === email && u.password === password);
+                if(!found) {
+                    alert('Authentication failed: Invalid credentials or unregistered node.');
+                    return;
+                }
+                currentUser = { id: found.id, name: found.name, email: found.email };
+                saveAuth();
+                closeAuthModal();
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            saveAuth();
         }
 
         function toggleSource(mode) {
@@ -200,7 +336,6 @@
 
         function filterType(type) { 
             currentFilter = type; 
-            // Update active states on sidebar buttons
             const buttons = document.querySelectorAll('#typeFilters button');
             buttons.forEach(btn => {
                 if(btn.textContent.includes(type) || (type === 'all' && btn.textContent.includes('All'))) {
@@ -212,7 +347,14 @@
             render(); 
         }
 
-        function openUploadModal() { document.getElementById('uploadModal').classList.remove('hidden'); }
+        function openUploadModal() { 
+            if(!currentUser) {
+                alert('Access Denied: Please log in or initialize an account to deploy resource nodes.');
+                openAuthModal('login');
+                return;
+            }
+            document.getElementById('uploadModal').classList.remove('hidden'); 
+        }
         function closeUploadModal() { document.getElementById('uploadModal').classList.add('hidden'); toggleSource('link'); }
         
         function addResource(e) {
@@ -273,6 +415,7 @@
         }
 
         document.getElementById('searchInput').addEventListener('input', render);
+        renderAuthNav();
         render();
     </script>
 </body>
